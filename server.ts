@@ -3,10 +3,11 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import fetch from "node-fetch";
 import cors from "cors";
+import fs from "fs";
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   // Allow all origins for the free-tier split (Frontend on Vercel, Backend on Render)
   app.use(cors());
@@ -26,8 +27,8 @@ async function startServer() {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://genz-match.sys", // Optional
-          "X-Title": "GenZ Match", // Optional
+          "HTTP-Referer": "https://genz-match.sys",
+          "X-Title": "GenZ Match",
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -45,7 +46,7 @@ async function startServer() {
     }
   });
 
-  // Vite middleware for development
+  // Vite middleware for development or serving frontend
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -54,13 +55,20 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    } else {
+      // If dist doesn't exist (pure API mode), provide a health check
+      app.get("/", (req, res) => {
+        res.json({ status: "ok", message: "GenZ Match AI Backend is live. Frontend is likely on Vercel." });
+      });
+    }
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  app.listen(Number(PORT), "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
