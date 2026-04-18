@@ -336,25 +336,28 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-4 lg:space-y-6 custom-scrollbar bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.02)_0%,transparent_80%)]">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-10 space-y-5 lg:space-y-8 custom-scrollbar bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.02)_0%,transparent_80%)]">
         {messages.map((msg, i) => {
           const isMe = msg.senderId === currentUser.uid;
+          const showTime = i === messages.length - 1 || (messages[i+1] && messages[i+1].senderId !== msg.senderId);
           return (
             <motion.div
-              initial={{ opacity: 0, x: isMe ? 20 : -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               key={msg.id || i}
               className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[85%] sm:max-w-[75%] px-4 lg:px-5 py-3 lg:py-4 font-medium text-xs transition-all ${
+              <div className={`max-w-[85%] sm:max-w-[70%] lg:max-w-[60%] px-5 py-4 font-medium text-sm lg:text-base leading-relaxed transition-all relative ${
                 isMe 
-                  ? 'bg-accent text-black rounded-tl-xl lg:rounded-tl-2xl rounded-bl-xl lg:rounded-bl-2xl rounded-tr-sm shadow-[0_0_20px_rgba(204,255,0,0.1)]' 
-                  : 'bg-panel text-zinc-100 border border-white/5 rounded-tr-xl lg:rounded-tr-2xl rounded-br-xl lg:rounded-br-2xl rounded-tl-sm shadow-xl'
+                  ? 'bg-accent text-black rounded-3xl rounded-tr-sm shadow-[0_10px_40px_rgba(204,255,0,0.15)] ml-8' 
+                  : 'bg-panel text-zinc-100 border border-white/5 rounded-3xl rounded-tl-sm shadow-2xl mr-8'
               }`}>
                 {msg.text}
-                <div className={`mt-2 font-mono text-[8px] opacity-50 ${isMe ? 'text-black/60' : 'text-white/40'}`}>
-                  {msg.createdAt ? (new Date(msg.createdAt.seconds * 1000)).toLocaleTimeString() : '...'}
-                </div>
+                {showTime && (
+                  <div className={`mt-2 font-mono text-[9px] opacity-40 ${isMe ? 'text-black/80' : 'text-white/40'}`}>
+                    {msg.createdAt ? (new Date(msg.createdAt.seconds * 1000)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TRANSMITTING...'}
+                  </div>
+                )}
               </div>
             </motion.div>
           );

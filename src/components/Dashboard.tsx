@@ -130,28 +130,41 @@ export default function Dashboard({ user, onOpenChat }: Props) {
   }, [user.uid]);
 
   const handleMatch = async () => {
-    if (onlineUsers.length === 0) return;
+    if (onlineUsers.length === 0) {
+      alert("⚠️ NO_NODES_FOUND: The network is currently silent. Invite others to start syncing!");
+      return;
+    }
     setMatching(true);
     setMatchedUser(null);
     
     try {
+      // 1. Filter out blocked, friends, and pending nodes
       const filteredOnline = onlineUsers.filter(u => 
         !blockedIds.includes(u.uid) && 
         !isFriend(u.uid) && 
         !hasPending(u.uid)
       );
-      const localUsers = filteredOnline.filter(u => u.language === myProfile?.language);
-      if (localUsers.length === 0) {
-        alert("No sync targets in your region. Adjusting frequency...");
+
+      if (filteredOnline.length === 0) {
+        alert("⚠️ NETWORK_SATURATED: You have connected with or filtered all active nodes in this region.");
         setMatching(false);
         return;
       }
 
-      const candidates = localUsers.sort(() => 0.5 - Math.random()).slice(0, 3);
-      let bestScore = -1;
-      let winner = candidates[0];
+      // 2. Prioritize same language, but don't strictly require it
+      let candidates = filteredOnline.filter(u => u.language === myProfile?.language);
+      
+      // Fallback: If no same-language users, use any available filtered user
+      if (candidates.length === 0) {
+        candidates = filteredOnline;
+      }
 
-      for (const candidate of candidates) {
+      // 3. Select top candidates to "Scrutinize" via AI
+      const selectionPool = candidates.sort(() => 0.5 - Math.random()).slice(0, 3);
+      let bestScore = -1;
+      let winner = selectionPool[0];
+
+      for (const candidate of selectionPool) {
         const score = await matchProfiles(myProfile, candidate);
         if (score > bestScore) {
           bestScore = score;
@@ -162,6 +175,7 @@ export default function Dashboard({ user, onOpenChat }: Props) {
       setMatchedUser({ ...winner, score: bestScore });
     } catch (e) {
       console.error(e);
+      alert("⚠️ SYNC_INTERRUPTED: Network instability detected.");
     } finally {
       setMatching(false);
     }
@@ -227,7 +241,7 @@ export default function Dashboard({ user, onOpenChat }: Props) {
       // 2. Clear Request
       await deleteDoc(doc(db, 'friend_requests', req.id));
       
-      // 3. Init Chat
+      // 3. Jump straight to chat for a fast "Handshaking" feel
       await startChat(req.fromId);
     } catch (e) {
       handleFirestoreError(e, 'write', 'friends');
