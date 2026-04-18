@@ -3,7 +3,7 @@ import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, getDoc, setDoc, serverTimestamp, orderBy, limit, deleteDoc, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MessageSquare, User as UserIcon, LogOut, Flame, Globe, Terminal, UserPlus, Check, X, Users, MessageCircle } from 'lucide-react';
+import { Search, MessageSquare, User as UserIcon, LogOut, Flame, Globe, Terminal, UserPlus, Check, X, Users, MessageCircle, Menu } from 'lucide-react';
 import { matchProfiles } from '../lib/gemini';
 
 export interface FirestoreErrorInfo {
@@ -61,17 +61,13 @@ export default function Dashboard({ user, onOpenChat }: Props) {
   const [blockedIds, setBlockedIds] = useState<string[]>([]);
   const [viewingUser, setViewingUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'chats' | 'friends' | 'requests'>('chats');
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'matches' | 'social'>('matches');
 
   useEffect(() => {
-    const fetchMyProfile = async () => {
-      try {
-        const p = await getDoc(doc(db, 'profiles', user.uid));
-        setMyProfile(p.data());
-      } catch (e) {
-        handleFirestoreError(e, 'get', `profiles/${user.uid}`);
-      }
-    };
-    fetchMyProfile();
+    const profileUnsub = onSnapshot(doc(db, 'profiles', user.uid), (doc) => {
+      if (doc.exists()) setMyProfile(doc.data());
+    });
 
     const q = query(collection(db, 'profiles'), where('isOnline', '==', true));
     
@@ -123,6 +119,7 @@ export default function Dashboard({ user, onOpenChat }: Props) {
     });
 
     return () => {
+      profileUnsub();
       unsubscribeUsers();
       unsubscribeChats();
       unsubscribeReqs();
@@ -255,32 +252,53 @@ export default function Dashboard({ user, onOpenChat }: Props) {
     <div className="flex flex-col h-screen overflow-hidden bg-bg text-white selection:bg-accent/30">
       {/* Top Nav */}
       <header className="h-[60px] border-b border-white/5 bg-panel flex items-center justify-between px-6 z-50">
-        <div className="font-mono font-black text-2xl tracking-tighter text-accent flex items-center gap-2">
-          <Terminal className="w-6 h-6" />
-          GENZ_MATCH.SYS
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowMobileSidebar(true)}
+            className="lg:hidden p-2 text-muted hover:text-white"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="font-mono font-black text-xl lg:text-2xl tracking-tighter text-accent flex items-center gap-2">
+            <Terminal className="w-5 lg:w-6 h-5 lg:h-6" />
+            <span className="hidden sm:inline">GENZ_MATCH.SYS</span>
+            <span className="sm:hidden">GZ_M</span>
+          </div>
         </div>
-        <div className="flex items-center gap-6 font-mono text-[10px] uppercase font-bold">
-           <div className="flex items-center gap-2">
-             <div className="w-2 h-2 bg-accent rounded-full animate-pulse shadow-[0_0_8px_var(--color-accent)]" />
-             <span className="text-white">VOICE_TOKENS: {myProfile?.voiceTokens || 0}</span>
+        
+        <div className="flex items-center gap-3 lg:gap-6 font-mono text-[9px] lg:text-[10px] uppercase font-bold text-right lg:text-left">
+           <div className="flex flex-col lg:flex-row lg:items-center gap-1 lg:gap-2">
+             <div className="flex items-center gap-1">
+               <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 bg-accent rounded-full animate-pulse shadow-[0_0_8px_var(--color-accent)]" />
+               <span className="text-white hidden lg:inline">VOICE_TOKENS:</span>
+               <span className="text-white lg:hidden">TOK:</span>
+               <span className="text-white">{myProfile?.voiceTokens || 0}</span>
+             </div>
            </div>
-           <div className="flex items-center gap-2">
+           
+           <div className="hidden sm:flex items-center gap-2">
              <div className="w-2 h-2 bg-safe rounded-full shadow-[0_0_8px_var(--color-safe)]" />
              <span className="text-white">@{myProfile?.displayName?.toLowerCase() || 'user'}</span>
-             <span className="text-muted">({myProfile?.language})</span>
            </div>
-           <div className="bg-panel px-4 py-1.5 border border-zinc-800 rounded-full">
-             {onlineUsers.length + 1} ONLINE
-           </div>
-           <button onClick={() => auth.signOut()} className="text-muted hover:text-white transition-colors">
+
+           <button onClick={() => auth.signOut()} className="text-muted hover:text-white transition-colors p-1">
              <LogOut className="w-4 h-4" />
            </button>
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[260px_1fr_320px] overflow-hidden">
-        {/* Sidebar */}
-        <aside className="border-r border-white/5 p-6 flex flex-col gap-10 bg-panel hidden lg:flex">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[260px_1fr_320px] overflow-hidden relative">
+        {/* Sidebar (Left) - Desktop/Mobile Drawer */}
+        <aside className={`
+          fixed lg:relative inset-y-0 left-0 z-40 w-64 lg:w-auto bg-panel lg:bg-transparent
+          border-r border-white/5 p-6 flex flex-col gap-10 transition-transform duration-300
+          ${showMobileSidebar ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+          lg:flex
+        `}>
+          <div className="lg:hidden flex justify-between items-center mb-4">
+             <span className="font-mono text-accent text-xs">NODE_IDENTITY</span>
+             <button onClick={() => setShowMobileSidebar(false)} className="text-muted"><X className="w-5 h-5"/></button>
+          </div>
           <div>
             <span className="section-label">Your Node</span>
             <div className="flex flex-col gap-2">
@@ -317,7 +335,11 @@ export default function Dashboard({ user, onOpenChat }: Props) {
         </aside>
 
         {/* Match Zone */}
-        <section className="relative flex flex-col items-center justify-center p-8 bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.03)_0%,#050505_100%)]">
+        <section className={`
+          relative flex-1 flex flex-col items-center justify-center p-4 lg:p-8 
+          bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.03)_0%,#050505_100%)]
+          ${mobileTab === 'matches' ? 'flex' : 'hidden lg:flex'}
+        `}>
            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
            <div className="absolute bottom-[20%] left-10 right-10 h-[1px] bg-accent/10 animate-pulse" />
            
@@ -354,7 +376,7 @@ export default function Dashboard({ user, onOpenChat }: Props) {
                   AI_MATCH: {matchedUser.score}%
                 </div>
                 
-                <h3 className="text-5xl font-black leading-none mb-3 italic">{matchedUser.displayName}</h3>
+                <h3 className="text-3xl lg:text-5xl font-black leading-none mb-3 italic">{matchedUser.displayName}</h3>
                 <div className="flex justify-between items-center mb-6">
                   <div className="font-mono text-accent text-xs flex items-center gap-2">
                     <div className="w-2 h-2 bg-accent rounded-full animate-ping" />
@@ -367,7 +389,7 @@ export default function Dashboard({ user, onOpenChat }: Props) {
                   )}
                 </div>
                 
-                <p className="text-muted text-lg mb-8 leading-relaxed italic">
+                <p className="text-muted text-base lg:text-lg mb-8 leading-relaxed italic">
                   "{matchedUser.bio}"
                 </p>
 
@@ -409,8 +431,12 @@ export default function Dashboard({ user, onOpenChat }: Props) {
            )}
         </section>
 
-        {/* Connections & Requests */}
-        <aside className="border-l border-white/5 p-6 flex flex-col bg-panel hidden lg:flex">
+        {/* Connections & Requests (Right Sidebar) */}
+        <aside className={`
+          bg-panel lg:bg-transparent border-white/5 
+          ${mobileTab === 'social' ? 'block' : 'hidden lg:block'}
+          flex-col p-6 border-l lg:flex
+        `}>
              <div className="flex gap-4 mb-6">
                 <button onClick={() => setActiveTab('chats')} className={`section-label flex items-center gap-1 transition-colors ${activeTab === 'chats' ? 'text-accent border-b border-accent' : 'hover:text-white'}`}>
                   <MessageSquare className="w-3 h-3" /> Chats
@@ -509,6 +535,34 @@ export default function Dashboard({ user, onOpenChat }: Props) {
           </div>
         </aside>
       </main>
+
+      {/* Bottom Nav for Mobile */}
+      <footer className="lg:hidden h-[70px] border-t border-white/5 bg-panel grid grid-cols-2 z-50">
+        <button 
+          onClick={() => setMobileTab('matches')}
+          className={`flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'matches' ? 'text-accent' : 'text-muted'}`}
+        >
+          <Search className="w-6 h-6" />
+          <span className="font-mono text-[9px] uppercase font-bold">DISCOVERY</span>
+        </button>
+        <button 
+          onClick={() => setMobileTab('social')}
+          className={`relative flex flex-col items-center justify-center gap-1 transition-colors ${mobileTab === 'social' ? 'text-accent' : 'text-muted'}`}
+        >
+          <MessageSquare className="w-6 h-6" />
+          <span className="font-mono text-[9px] uppercase font-bold">SOCIAL_NET</span>
+          {incomingRequests.length > 0 && (
+            <span className="absolute top-3 right-1/3 w-2 h-2 bg-danger rounded-full animate-pulse" />
+          )}
+        </button>
+      </footer>
+
+      {showMobileSidebar && (
+        <div 
+          onClick={() => setShowMobileSidebar(false)}
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30" 
+        />
+      )}
 
       {/* Info Modal */}
       <AnimatePresence>

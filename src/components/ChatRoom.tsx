@@ -120,6 +120,11 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
     e?.preventDefault();
     if (!inputText.trim() || isModerating) return;
 
+    if (isBlockedByMe || hasBlockedMe) {
+      alert("⚠️ SIGNAL_TERMINATED: Communication is currently blocked.");
+      return;
+    }
+
     setIsModerating(true);
     const modResult = await moderateMessage(inputText);
     
@@ -285,47 +290,49 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
       )}
 
       {/* Header */}
-      <header className="h-[70px] border-b border-white/5 bg-panel px-6 flex items-center justify-between shadow-lg">
-        <div className="flex items-center gap-4">
+      <header className="flex-shrink-0 min-h-[70px] border-b border-white/5 bg-panel px-4 lg:px-8 flex items-center justify-between overflow-x-auto no-scrollbar gap-4 shadow-lg sticky top-0 z-50">
+        <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0">
           <button onClick={onBack} className="p-2 border border-white/10 hover:bg-white/5 transition-colors">
             <ChevronLeft className="w-5 h-5 text-accent" />
           </button>
           <div>
-            <h2 className="font-mono font-bold text-sm tracking-widest uppercase">NODE_SECURE_SESSION</h2>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${otherUserStatus.isOnline ? 'bg-safe shadow-[0_0_8px_#00FF94]' : 'bg-zinc-600'}`} />
-              <span className="text-[10px] text-zinc-500 font-mono uppercase">
-                {otherUserStatus.isOnline ? 'ENCRYPTED_HANDSHAKE_OK' : 'LINK_LOST_RECONNECTING'}
+            <h2 className="font-mono font-bold text-[10px] lg:text-sm tracking-widest uppercase truncate max-w-[120px] lg:max-w-none">NODE_SECURE</h2>
+            <div className="flex items-center gap-1 lg:gap-2">
+              <div className={`w-1.5 lg:w-2 h-1.5 lg:h-2 rounded-full ${otherUserStatus.isOnline ? 'bg-safe shadow-[0_0_8px_#00FF94]' : 'bg-zinc-600'}`} />
+              <span className="text-[8px] lg:text-[10px] text-zinc-500 font-mono uppercase whitespace-nowrap">
+                {otherUserStatus.isOnline ? 'ENCRYPTED_OK' : 'LINK_LOST'}
               </span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
           <button 
             onClick={handleBlock}
-            className={`flex items-center gap-2 border px-3 py-1.5 rounded-sm font-mono text-[9px] uppercase font-bold transition-all ${
+            className={`flex items-center gap-1 lg:gap-2 border px-2 lg:px-3 py-1 lg:py-1.5 rounded-sm font-mono text-[8px] lg:text-[9px] uppercase font-bold transition-all ${
               isBlockedByMe 
                 ? 'bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30' 
                 : 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10 hover:text-white'
             }`}
           >
-            <Ban className={`w-3 h-3 ${isBlockedByMe ? 'animate-pulse' : 'text-red-500'}`} /> {isBlockedByMe ? 'Unblock_Node.SYS' : 'Block_Node.SYS'}
+            <Ban className={`w-3 h-3 ${isBlockedByMe ? 'animate-pulse' : 'text-red-500'}`} />
+            <span className="hidden sm:inline">{isBlockedByMe ? 'Unblock' : 'Block'}</span>
           </button>
           <button 
             onClick={handleReport}
-            className="flex items-center gap-2 bg-danger/10 border border-danger/30 px-3 py-1.5 rounded-sm text-danger font-mono text-[9px] uppercase font-bold hover:bg-danger/20 transition-all"
+            className="flex items-center gap-1 lg:gap-2 bg-danger/10 border border-danger/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-sm text-danger font-mono text-[8px] lg:text-[9px] uppercase font-bold hover:bg-danger/20 transition-all"
           >
-            <Shield className="w-3 h-3" /> Report_User.SYS
+            <Shield className="w-3 h-3" />
+            <span className="hidden sm:inline">Report</span>
           </button>
           <button 
             onClick={startVoiceCall}
-            className="flex items-center gap-2 bg-accent/10 border border-accent/30 px-3 py-1.5 rounded-sm text-accent font-mono text-[9px] uppercase font-bold hover:bg-accent/20 transition-all"
+            className="flex items-center gap-1 lg:gap-2 bg-accent/10 border border-accent/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-sm text-accent font-mono text-[8px] lg:text-[9px] uppercase font-bold hover:bg-accent/20 transition-all"
           >
-            <Phone className="w-3 h-3" /> Voice_Call ({voiceTokens})
+            <Phone className="w-3 h-3" />
+            <span className="hidden sm:inline">Voice</span>
+            <span className="sm:hidden">Call</span>
+            ({voiceTokens})
           </button>
-          <div className="bg-safe/10 border border-safe/30 px-3 py-1 rounded-sm text-safe font-mono text-[9px] uppercase font-bold">
-            Moderation: Strict
-          </div>
         </div>
       </header>
 

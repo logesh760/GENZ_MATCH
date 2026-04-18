@@ -36,7 +36,7 @@ export default function AuthView() {
         transition={{ delay: 0.3 }}
         className="z-10"
       >
-        <h1 className="text-6xl font-display font-black mb-2 text-white">
+        <h1 className="text-4xl sm:text-6xl font-display font-black mb-2 text-white">
           GENZ<span className="text-accent underline decoration-4 underline-offset-8">MATCH</span>
         </h1>
         <p className="font-mono text-accent text-xs mb-8 uppercase tracking-[0.2em]">System.initialize(User:Student)</p>

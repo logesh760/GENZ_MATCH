@@ -63,6 +63,20 @@ service cloud.firestore {
         && data.addedAt == request.time;
     }
 
+    function isValidReport(data) {
+      return data.keys().hasAll(['reporterId', 'reportedId', 'chatId', 'reason', 'createdAt', 'status'])
+        && data.reporterId == request.auth.uid
+        && data.reason is string && data.reason.size() <= 500
+        && data.status == 'pending'
+        && data.createdAt == request.time;
+    }
+
+    function isValidBlock(data) {
+      return data.keys().hasAll(['blockerId', 'blockedId', 'createdAt'])
+        && data.blockerId == request.auth.uid
+        && data.createdAt == request.time;
+    }
+
     // --- Collection Routes ---
 
     // Profiles
@@ -72,8 +86,8 @@ service cloud.firestore {
 
       allow create: if isOwner(userId) && isValidId(userId) && isValidProfile(incoming());
       allow update: if isOwner(userId) && isValidId(userId) && (
-        // Action: Update Profile Info
-        (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'bio', 'interests', 'language', 'gender', 'avatarUrl', 'lastActive', 'isOnline']) && isValidProfile(incoming()))
+        // Action: Update Profile Info (including voiceTokens consumption)
+        (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'bio', 'interests', 'language', 'gender', 'avatarUrl', 'lastActive', 'isOnline', 'voiceTokens']) && isValidProfile(incoming()))
         ||
         // Action: Online Status Heartbeat
         (incoming().diff(existing()).affectedKeys().hasOnly(['isOnline', 'lastActive']) && incoming().isOnline is bool)
@@ -113,14 +127,13 @@ service cloud.firestore {
 
     // Reports
     match /reports/{reportId} {
-      allow create: if isSignedIn() && incoming().reporterId == request.auth.uid && isValidId(reportId);
-      // Only admins or system could read reports (simulated for now by denying all except owners if they need to see their status)
+      allow create: if isSignedIn() && isValidReport(incoming()) && isValidId(reportId);
       allow get: if isSignedIn() && resource.data.reporterId == request.auth.uid;
     }
 
     // Blocks
     match /blocks/{blockId} {
-      allow create: if isSignedIn() && incoming().blockerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidBlock(incoming()) && isValidId(blockId);
       allow get: if isSignedIn() && (resource.data.blockerId == request.auth.uid || resource.data.blockedId == request.auth.uid);
       allow list: if isSignedIn() && (resource.data.blockerId == request.auth.uid);
       allow delete: if isSignedIn() && resource.data.blockerId == request.auth.uid;
@@ -128,12 +141,9 @@ service cloud.firestore {
 
     // Friend Requests
     match /friend_requests/{requestId} {
-      allow get: if isSignedIn() && (resource == null || resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
-      allow list: if isSignedIn() && (
-        ('fromId' in resource.data && resource.data.fromId == request.auth.uid) || 
-        ('toId' in resource.data && resource.data.toId == request.auth.uid)
-      );
-      allow create: if isSignedIn() && isValidFriendRequest(incoming())
+      allow get: if isSignedIn() && isValidId(requestId) && (resource == null || resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(requestId) && isValidFriendRequest(incoming())
         && !exists(/databases/$(database)/documents/blocks/$(request.auth.uid + "_" + incoming().toId))
         && !exists(/databases/$(database)/documents/blocks/$(incoming().toId + "_" + request.auth.uid));
       allow update: if isSignedIn() && ('toId' in resource.data && resource.data.toId == request.auth.uid) 
@@ -145,8 +155,13 @@ service cloud.firestore {
     // Friends Subcollection
     match /profiles/{userId}/friends/{friendId} {
       allow get: if isSignedIn() && (isOwner(userId) || (resource != null && resource.data.uid == request.auth.uid));
-      allow list: if isSignedIn() && (isOwner(userId) || resource.data.uid == request.auth.uid);
-      allow write: if isSignedIn() && isOwner(userId) && isValidFriend(incoming());
+      allow list: if isSignedIn() && (isOwner(userId) || (resource != null && resource.data.uid == request.auth.uid));
+      allow create: if isSignedIn() && (
+        isOwner(userId) || 
+        (friendId == request.auth.uid && exists(/databases/$(database)/documents/friend_requests/$(friendId < userId ? friendId + "_" + userId : userId + "_" + friendId)))
+      ) && isValidFriend(incoming());
+      allow update: if isSignedIn() && isOwner(userId) && isValidFriend(incoming());
+      allow delete: if isSignedIn() && (isOwner(userId) || friendId == request.auth.uid);
     }
   }
 }

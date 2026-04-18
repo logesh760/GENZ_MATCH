@@ -57,13 +57,13 @@ export default function ProfileSetup({ user, onComplete }: Props) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8 pt-16 h-screen overflow-y-auto pr-4 custom-scrollbar">
-      <div className="mb-12 border-l-8 border-accent pl-8">
-        <h2 className="text-6xl font-black mb-2 italic">BIO_DATA.INIT</h2>
-        <p className="font-mono text-accent text-sm uppercase tracking-widest">Registering Student Identity to Network...</p>
+    <div className="max-w-2xl mx-auto p-4 lg:p-8 pt-12 lg:pt-16 h-screen overflow-y-auto pr-2 lg:pr-4 custom-scrollbar">
+      <div className="mb-8 lg:mb-12 border-l-4 lg:border-l-8 border-accent pl-4 lg:pl-8">
+        <h2 className="text-4xl lg:text-6xl font-black mb-2 italic">BIO_DATA.INIT</h2>
+        <p className="font-mono text-accent text-[10px] lg:text-sm uppercase tracking-widest">Registering Student Identity to Network...</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="brutal-card p-10 space-y-8 bg-panel shadow-2xl mb-20 border border-white/5 relative">
+      <form onSubmit={handleSubmit} className="brutal-card p-6 lg:p-10 space-y-6 lg:space-y-8 bg-panel shadow-2xl mb-20 border border-white/5 relative">
         <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.02] to-transparent pointer-events-none" />
         <div className="relative z-10 space-y-8">
           <div className="space-y-4">
