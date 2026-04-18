@@ -1,64 +1,67 @@
-import { GoogleGenAI, Type } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-
 export interface ModerationResult {
   status: 'safe' | 'warning' | 'block';
   reason?: string;
 }
 
+async function callAI(messages: any[], model: string = "google/gemini-2.0-flash-001", responseFormat?: any) {
+  const response = await fetch("/api/ai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages,
+      model,
+      response_format: responseFormat
+    })
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || "AI Stream Error");
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
 export async function moderateMessage(text: string): Promise<ModerationResult> {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Audit the following message for safety in a college-age dating/chat app. 
-      Check for abusive language, spam, inappropriate/sexual content, or harm.
-      Message: "${text}"`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            status: { type: Type.STRING, enum: ["safe", "warning", "block"] },
-            reason: { type: Type.STRING }
-          },
-          required: ["status"]
-        }
+    const content = await callAI([
+      {
+        role: "system",
+        content: "Audit the following message for safety in a college-age dating/chat app. Return JSON with 'status' (safe, warning, block) and 'reason'."
+      },
+      {
+        role: "user",
+        content: text
       }
-    });
+    ], "google/gemini-2.0-flash-001", { type: "json_object" });
 
-    const result = JSON.parse(response.text || '{}');
+    const result = JSON.parse(content || '{}');
     return {
       status: result.status || 'safe',
       reason: result.reason
     };
   } catch (error) {
     console.error("AI Moderation Error:", error);
-    return { status: 'safe' }; // Fail-safe
+    return { status: 'safe' };
   }
 }
 
 export async function matchProfiles(user1: any, user2: any): Promise<number> {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Calculate a matching score (0-100) between two user profiles for a social app.
-      Profile 1: Bio: "${user1.bio}", Interests: ${JSON.stringify(user1.interests)}
-      Profile 2: Bio: "${user2.bio}", Interests: ${JSON.stringify(user2.interests)}
-      Consider semantic similarity, shared interests, and overall vibe.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            score: { type: Type.NUMBER }
-          },
-          required: ["score"]
-        }
+    const content = await callAI([
+      {
+        role: "system",
+        content: "Calculate a matching score (0-100) between two user profiles. Return JSON with 'score' key."
+      },
+      {
+        role: "user",
+        content: `Profile 1: Bio: "${user1.bio}", Interests: ${JSON.stringify(user1.interests)}
+        Profile 2: Bio: "${user2.bio}", Interests: ${JSON.stringify(user2.interests)}`
       }
-    });
+    ], "google/gemini-2.0-flash-001", { type: "json_object" });
 
-    const result = JSON.parse(response.text || '{}');
+    const result = JSON.parse(content || '{}');
     return result.score || 0;
   } catch (error) {
     console.error("AI Matching Error:", error);
@@ -68,13 +71,16 @@ export async function matchProfiles(user1: any, user2: any): Promise<number> {
 
 export async function generateIcebreaker(interests: string[]): Promise<string> {
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Generate a creative, light-hearted icebreaker message for two people who share these interests: ${interests.join(', ')}. 
-      Keep it casual and Gen-Z friendly.`,
-    });
-
-    return response.text || "Hey! What's up?";
+    return await callAI([
+      {
+        role: "system",
+        content: "Generate 1 creative, Gen-Z friendly icebreaker message based on shared interests."
+      },
+      {
+        role: "user",
+        content: interests.join(', ')
+      }
+    ]);
   } catch (error) {
     console.error("AI Icebreaker Error:", error);
     return "Hey! How's it going?";
@@ -85,40 +91,21 @@ export async function generateSuggestions(messages: any[]): Promise<string[]> {
   try {
     const chatHistory = messages
       .slice(-3)
-      .map(m => `Sender_${m.senderId === 'me' ? 'A' : 'B'}: ${m.text}`)
+      .map(m => `${m.senderId === 'me' ? 'User' : 'Match'}: ${m.text}`)
       .join('\n');
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `You are a helpful chat assistant for a secure college dating/chat app.
-      Based on the conversation below, suggest 3 short, natural, and friendly replies.
-      
-      Rules:
-      - Keep replies under 15 words
-      - Make it casual and human-like
-      - No offensive or inappropriate content
-      - Match the language of the conversation. If the conversation is in Tamil, reply in Tamil (Tanglish or Tamil script).
-      
-      Conversation:
-      ${chatHistory}
-      
-      Return as a JSON list of 3 strings.`,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            suggestions: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            }
-          },
-          required: ["suggestions"]
-        }
+    const content = await callAI([
+      {
+        role: "system",
+        content: "Suggest 3 short, natural replies to the chat. No inappropriate content. Return JSON list 'suggestions'."
+      },
+      {
+        role: "user",
+        content: chatHistory
       }
-    });
+    ], "google/gemini-2.0-flash-001", { type: "json_object" });
 
-    const result = JSON.parse(response.text || '{}');
+    const result = JSON.parse(content || '{}');
     return result.suggestions || [];
   } catch (error) {
     console.error("AI Suggestion Error:", error);
