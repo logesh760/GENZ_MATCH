@@ -4,7 +4,9 @@ export interface ModerationResult {
 }
 
 async function callAI(messages: any[], model: string = "google/gemini-2.0-flash-001", responseFormat?: any) {
-  const response = await fetch("/api/ai", {
+  // Use the environment variable if provided (for Vercel), otherwise fallback to relative path (for local/monolith)
+  const baseUrl = import.meta.env.VITE_API_URL || "";
+  const response = await fetch(`${baseUrl}/api/ai`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

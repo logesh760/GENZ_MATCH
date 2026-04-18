@@ -2,11 +2,14 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fetch from "node-fetch";
+import cors from "cors";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Allow all origins for the free-tier split (Frontend on Vercel, Backend on Render)
+  app.use(cors());
   app.use(express.json());
 
   // API Route for OpenRouter Proxy
