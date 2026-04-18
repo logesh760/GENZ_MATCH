@@ -290,53 +290,53 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
       )}
 
       {/* Header */}
-      <header className="flex-shrink-0 min-h-[70px] border-b border-white/5 bg-panel px-4 lg:px-8 flex items-center justify-between overflow-x-auto no-scrollbar gap-4 shadow-lg sticky top-0 z-50">
-        <div className="flex items-center gap-3 lg:gap-4 flex-shrink-0">
-          <button onClick={onBack} className="p-2 border border-white/10 hover:bg-white/5 transition-colors">
-            <ChevronLeft className="w-5 h-5 text-accent" />
+      <header className="flex-shrink-0 min-h-[60px] lg:min-h-[70px] border-b border-white/5 bg-panel px-3 lg:px-8 flex items-center justify-between overflow-x-hidden gap-2 shadow-lg sticky top-0 z-50">
+        <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
+          <button onClick={onBack} className="p-1.5 lg:p-2 border border-white/10 hover:bg-white/5 transition-colors">
+            <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5 text-accent" />
           </button>
-          <div>
-            <h2 className="font-mono font-bold text-[10px] lg:text-sm tracking-widest uppercase truncate max-w-[120px] lg:max-w-none">NODE_SECURE</h2>
+          <div className="min-w-0">
+            <h2 className="font-mono font-bold text-[8px] lg:text-sm tracking-widest uppercase truncate max-w-[80px] sm:max-w-none">NODE_SECURE</h2>
             <div className="flex items-center gap-1 lg:gap-2">
               <div className={`w-1.5 lg:w-2 h-1.5 lg:h-2 rounded-full ${otherUserStatus.isOnline ? 'bg-safe shadow-[0_0_8px_#00FF94]' : 'bg-zinc-600'}`} />
-              <span className="text-[8px] lg:text-[10px] text-zinc-500 font-mono uppercase whitespace-nowrap">
+              <span className="text-[7px] lg:text-[10px] text-zinc-500 font-mono uppercase whitespace-nowrap truncate">
                 {otherUserStatus.isOnline ? 'ENCRYPTED_OK' : 'LINK_LOST'}
               </span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
+        <div className="flex items-center gap-1.5 lg:gap-4 flex-shrink-0">
           <button 
             onClick={handleBlock}
-            className={`flex items-center gap-1 lg:gap-2 border px-2 lg:px-3 py-1 lg:py-1.5 rounded-sm font-mono text-[8px] lg:text-[9px] uppercase font-bold transition-all ${
+            className={`flex items-center gap-1 lg:gap-2 border px-1.5 lg:px-3 py-1 lg:py-1.5 rounded-sm font-mono text-[7px] lg:text-[9px] uppercase font-bold transition-all ${
               isBlockedByMe 
                 ? 'bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30' 
                 : 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10 hover:text-white'
             }`}
           >
-            <Ban className={`w-3 h-3 ${isBlockedByMe ? 'animate-pulse' : 'text-red-500'}`} />
-            <span className="hidden sm:inline">{isBlockedByMe ? 'Unblock' : 'Block'}</span>
+            <Ban className={`w-2.5 h-2.5 lg:w-3 lg:h-3 ${isBlockedByMe ? 'animate-pulse' : 'text-red-500'}`} />
+            <span className="hidden md:inline">{isBlockedByMe ? 'Unblock' : 'Block'}</span>
           </button>
           <button 
             onClick={handleReport}
-            className="flex items-center gap-1 lg:gap-2 bg-danger/10 border border-danger/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-sm text-danger font-mono text-[8px] lg:text-[9px] uppercase font-bold hover:bg-danger/20 transition-all"
+            className="flex items-center gap-1 lg:gap-2 bg-danger/10 border border-danger/30 px-1.5 lg:px-3 py-1 lg:py-1.5 rounded-sm text-danger font-mono text-[7px] lg:text-[9px] uppercase font-bold hover:bg-danger/20 transition-all"
           >
-            <Shield className="w-3 h-3" />
-            <span className="hidden sm:inline">Report</span>
+            <Shield className="w-2.5 h-2.5 lg:w-3 lg:h-3" />
+            <span className="hidden md:inline">Report</span>
           </button>
           <button 
             onClick={startVoiceCall}
-            className="flex items-center gap-1 lg:gap-2 bg-accent/10 border border-accent/30 px-2 lg:px-3 py-1 lg:py-1.5 rounded-sm text-accent font-mono text-[8px] lg:text-[9px] uppercase font-bold hover:bg-accent/20 transition-all"
+            className="flex items-center gap-1 lg:gap-2 bg-accent/10 border border-accent/30 px-1.5 lg:px-3 py-1 lg:py-1.5 rounded-sm text-accent font-mono text-[7px] lg:text-[9px] uppercase font-bold hover:bg-accent/20 transition-all"
           >
-            <Phone className="w-3 h-3" />
-            <span className="hidden sm:inline">Voice</span>
-            <span className="sm:hidden">Call</span>
+            <Phone className="w-2.5 h-2.5 lg:w-3 lg:h-3" />
+            <span className="hidden md:inline">Voice</span>
+            <span className="md:hidden">Call</span>
             ({voiceTokens})
           </button>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.02)_0%,transparent_80%)]">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-4 lg:space-y-6 custom-scrollbar bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.02)_0%,transparent_80%)]">
         {messages.map((msg, i) => {
           const isMe = msg.senderId === currentUser.uid;
           return (
@@ -346,10 +346,10 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
               key={msg.id || i}
               className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[75%] px-5 py-4 font-medium text-sm transition-all ${
+              <div className={`max-w-[85%] sm:max-w-[75%] px-4 lg:px-5 py-3 lg:py-4 font-medium text-xs transition-all ${
                 isMe 
-                  ? 'bg-accent text-black rounded-tl-2xl rounded-bl-2xl rounded-tr-sm shadow-[0_0_20px_rgba(204,255,0,0.1)]' 
-                  : 'bg-panel text-zinc-100 border border-white/5 rounded-tr-2xl rounded-br-2xl rounded-tl-sm shadow-xl'
+                  ? 'bg-accent text-black rounded-tl-xl lg:rounded-tl-2xl rounded-bl-xl lg:rounded-bl-2xl rounded-tr-sm shadow-[0_0_20px_rgba(204,255,0,0.1)]' 
+                  : 'bg-panel text-zinc-100 border border-white/5 rounded-tr-xl lg:rounded-tr-2xl rounded-br-xl lg:rounded-br-2xl rounded-tl-sm shadow-xl'
               }`}>
                 {msg.text}
                 <div className={`mt-2 font-mono text-[8px] opacity-50 ${isMe ? 'text-black/60' : 'text-white/40'}`}>
@@ -388,7 +388,7 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
       </div>
 
       {/* Input */}
-      <footer className="p-6 pt-2 border-t border-white/5 bg-panel/50 backdrop-blur-md">
+      <footer className="p-4 lg:p-6 pt-2 border-t border-white/5 bg-panel/50 backdrop-blur-md">
         {/* AI Suggestions Row */}
         <AnimatePresence>
           {suggestions.length > 0 && (
@@ -396,7 +396,7 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="flex gap-2 mb-4 overflow-x-auto pb-2 custom-scrollbar"
+              className="flex gap-2 mb-3 lg:mb-4 overflow-x-auto pb-2 no-scrollbar"
             >
               {suggestions.map((s, i) => (
                 <button

@@ -1,7 +1,6 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import fetch from "node-fetch";
 import cors from "cors";
 import fs from "fs";
 

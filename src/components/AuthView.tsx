@@ -14,7 +14,7 @@ export default function AuthView() {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto overflow-hidden bg-bg relative selection:bg-accent/30">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 text-center max-w-lg mx-auto overflow-hidden bg-bg relative selection:bg-accent/30">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(204,255,0,0.05)_0%,transparent_100%)] z-0" />
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none" />
       
@@ -22,11 +22,11 @@ export default function AuthView() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mb-8 relative z-10"
+        className="mb-6 sm:mb-8 relative z-10"
       >
-        <div className="p-8 border border-white/10 bg-panel rotate-3 shadow-2xl relative">
+        <div className="p-6 sm:p-8 border border-white/10 bg-panel rotate-3 shadow-2xl relative">
            <div className="absolute -inset-1 border border-accent/20 rotate-2 -z-10" />
-           <Terminal className="w-16 h-16 text-accent" />
+           <Terminal className="w-12 h-12 sm:w-16 sm:h-16 text-accent" />
         </div>
       </motion.div>
 
@@ -36,20 +36,20 @@ export default function AuthView() {
         transition={{ delay: 0.3 }}
         className="z-10"
       >
-        <h1 className="text-4xl sm:text-6xl font-display font-black mb-2 text-white">
-          GENZ<span className="text-accent underline decoration-4 underline-offset-8">MATCH</span>
+        <h1 className="text-3xl sm:text-6xl font-display font-black mb-2 text-white">
+          GENZ<span className="text-accent underline decoration-2 sm:decoration-4 underline-offset-4 sm:underline-offset-8">MATCH</span>
         </h1>
-        <p className="font-mono text-accent text-xs mb-8 uppercase tracking-[0.2em]">System.initialize(User:Student)</p>
+        <p className="font-mono text-accent text-[9px] sm:text-xs mb-6 sm:mb-8 uppercase tracking-[0.2em]">System.initialize(User:Student)</p>
       </motion.div>
 
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="text-muted text-lg mb-12 leading-relaxed z-10 font-medium"
+        className="text-muted text-base sm:text-lg mb-8 sm:mb-12 leading-relaxed z-10 font-medium"
       >
         Secure AI-driven peer discovery.<br/>
-        <span className="text-white/60 text-sm">Strict Filter. Safe Chat. Pure Vibe.</span>
+        <span className="text-white/60 text-xs sm:text-sm">Strict Filter. Safe Chat. Pure Vibe.</span>
       </motion.p>
 
       <motion.div

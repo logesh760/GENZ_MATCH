@@ -290,10 +290,10 @@ export default function Dashboard({ user, onOpenChat }: Props) {
       <main className="flex-1 grid grid-cols-1 lg:grid-cols-[260px_1fr_320px] overflow-hidden relative">
         {/* Sidebar (Left) - Desktop/Mobile Drawer */}
         <aside className={`
-          fixed lg:relative inset-y-0 left-0 z-40 w-64 lg:w-auto bg-panel lg:bg-transparent
-          border-r border-white/5 p-6 flex flex-col gap-10 transition-transform duration-300
-          ${showMobileSidebar ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
-          lg:flex
+          fixed lg:relative inset-y-0 left-0 z-40 w-72 lg:w-auto bg-panel lg:bg-transparent
+          border-r border-white/5 p-6 flex flex-col gap-8 transition-transform duration-300
+          ${showMobileSidebar ? 'translate-x-0 shadow-[20px_0_60px_rgba(0,0,0,0.8)]' : '-translate-x-full lg:translate-x-0'}
+          lg:flex overflow-y-auto no-scrollbar
         `}>
           <div className="lg:hidden flex justify-between items-center mb-4">
              <span className="font-mono text-accent text-xs">NODE_IDENTITY</span>
@@ -370,9 +370,9 @@ export default function Dashboard({ user, onOpenChat }: Props) {
              <motion.div 
                initial={{ y: 20, opacity: 0 }}
                animate={{ y: 0, opacity: 1 }}
-               className="brutal-card w-full max-w-[420px] p-10 relative"
+               className="brutal-card w-full max-w-[420px] p-6 lg:p-10 relative overflow-y-auto max-h-[90%] no-scrollbar"
              >
-                <div className="absolute -top-4 right-6 bg-accent text-black font-mono font-black py-1 px-4 text-sm uppercase">
+                <div className="absolute -top-4 right-6 bg-accent text-black font-mono font-black py-1 px-4 text-xs uppercase z-20">
                   AI_MATCH: {matchedUser.score}%
                 </div>
                 
@@ -399,10 +399,10 @@ export default function Dashboard({ user, onOpenChat }: Props) {
                    ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                    <button 
                      onClick={() => setMatchedUser(null)}
-                     className="brutal-btn bg-white/5 border border-white/10 text-white py-4 text-xs tracking-widest uppercase font-bold hover:bg-white/10"
+                     className="brutal-btn bg-white/5 border border-white/10 text-white py-4 text-[10px] sm:text-xs tracking-widest uppercase font-bold hover:bg-white/10"
                     >
                       SKIP_NODE
                     </button>
