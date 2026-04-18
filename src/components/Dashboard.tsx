@@ -3,7 +3,7 @@ import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, getDoc, setDoc, serverTimestamp, orderBy, limit, deleteDoc, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MessageSquare, User as UserIcon, LogOut, Flame, Globe, Terminal, UserPlus, Check, X, Users, MessageCircle, Menu } from 'lucide-react';
+import { Search, MessageSquare, User as UserIcon, LogOut, Flame, Globe, Terminal, UserPlus, Check, X, Users, MessageCircle, Menu, Instagram, Facebook } from 'lucide-react';
 import { matchProfiles } from '../lib/gemini';
 
 export interface FirestoreErrorInfo {
@@ -315,10 +315,23 @@ export default function Dashboard({ user, onOpenChat }: Props) {
           </div>
           <div>
             <span className="section-label">Your Node</span>
-            <div className="flex flex-col gap-2">
-               <div className="font-mono text-xs text-zinc-300">LOC: {myProfile?.country || 'UNKNOWN'}</div>
-               <div className="font-mono text-[10px] text-muted truncate">SONG: {myProfile?.favoriteSong || 'SILENCE'}</div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden bg-white/5 flex-shrink-0">
+                {myProfile?.avatarUrl ? (
+                  <img src={myProfile.avatarUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover" alt="me" />
+                ) : (
+                  <UserIcon className="w-full h-full p-2 text-muted" />
+                )}
+              </div>
+              <div className="flex flex-col min-w-0">
+                 <div className="font-mono text-xs text-zinc-300 truncate">LOC: {myProfile?.country || 'UNKNOWN'}</div>
+                 <div className="flex gap-2 mt-1">
+                    {myProfile?.instagram && <Instagram className="w-3 h-3 text-muted" />}
+                    {myProfile?.facebook && <Facebook className="w-3 h-3 text-muted" />}
+                 </div>
+              </div>
             </div>
+            <div className="font-mono text-[10px] text-muted truncate">SONG: {myProfile?.favoriteSong || 'SILENCE'}</div>
           </div>
 
           <div>
@@ -396,12 +409,38 @@ export default function Dashboard({ user, onOpenChat }: Props) {
                     <div className="w-2 h-2 bg-accent rounded-full animate-ping" />
                     {matchedUser.country} // {matchedUser.language}
                   </div>
-                  {matchedUser.favoriteSong && (
-                    <div className="font-mono text-[10px] text-muted flex items-center gap-1 uppercase italic">
-                       ♫ {matchedUser.favoriteSong}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {matchedUser.instagram && (
+                      <a href={`https://instagram.com/${matchedUser.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent transition-colors">
+                        <Instagram className="w-4 h-4" />
+                      </a>
+                    )}
+                    {matchedUser.facebook && (
+                      <a href={matchedUser.facebook.startsWith('http') ? matchedUser.facebook : `https://facebook.com/${matchedUser.facebook}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent transition-colors">
+                        <Facebook className="w-4 h-4" />
+                      </a>
+                    )}
+                    {matchedUser.favoriteSong && (
+                      <div className="font-mono text-[10px] text-muted flex items-center gap-1 uppercase italic">
+                         ♫ {matchedUser.favoriteSong}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {matchedUser.images && matchedUser.images.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar -mx-2 px-2">
+                    {matchedUser.images.map((img: string, idx: number) => (
+                      <img 
+                        key={idx} 
+                        src={img} 
+                        referrerPolicy="no-referrer"
+                        className="w-48 h-64 object-cover flex-shrink-0 border border-white/10 hover:border-accent/50 transition-all rounded-sm" 
+                        alt={`Profile ${idx}`} 
+                      />
+                    ))}
+                  </div>
+                )}
                 
                 <p className="text-muted text-base lg:text-lg mb-8 leading-relaxed italic">
                   "{matchedUser.bio}"
@@ -597,24 +636,54 @@ export default function Dashboard({ user, onOpenChat }: Props) {
                 <X className="w-5 h-5" />
               </button>
               
-              <div className="text-center mb-6">
-                 <div className="w-20 h-20 bg-accent/20 rounded-full mx-auto mb-4 flex items-center justify-center border border-accent/30">
-                    <UserIcon className="w-10 h-10 text-accent" />
-                 </div>
-                 <h3 className="text-2xl font-black italic text-white uppercase">{viewingUser.displayName}</h3>
-                 <p className="font-mono text-xs text-accent mt-1 uppercase tracking-widest">{viewingUser.gender} // {viewingUser.country}</p>
-              </div>
+              <div className="text-center mb-6 relative group">
+                  <div className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center border border-accent/30 overflow-hidden bg-accent/20">
+                    {viewingUser.avatarUrl ? (
+                      <img src={viewingUser.avatarUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover" alt="avatar" />
+                    ) : (
+                      <UserIcon className="w-10 h-10 text-accent" />
+                    )}
+                  </div>
+                  <h3 className="text-2xl font-black italic text-white uppercase">{viewingUser.displayName}</h3>
+                  <div className="flex items-center justify-center gap-3 mt-1">
+                    <p className="font-mono text-[9px] text-accent uppercase tracking-widest">{viewingUser.gender} // {viewingUser.country}</p>
+                    {viewingUser.instagram && (
+                      <a href={`https://instagram.com/${viewingUser.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent">
+                        <Instagram className="w-3 h-3" />
+                      </a>
+                    )}
+                    {viewingUser.facebook && (
+                      <a href={viewingUser.facebook.startsWith('http') ? viewingUser.facebook : `https://facebook.com/${viewingUser.facebook}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent">
+                        <Facebook className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+               </div>
 
-              <div className="space-y-4 font-mono text-xs">
-                 <div className="p-3 bg-bg border border-white/5 italic text-muted">
-                    "{viewingUser.bio || 'No transmission data.'}"
-                 </div>
-                 <div className="flex flex-wrap gap-2">
-                    {viewingUser.interests?.map((it: string) => (
-                      <span key={it} className="px-2 py-1 bg-white/5 border border-white/10 text-[9px] uppercase">{it}</span>
+               {viewingUser.images && viewingUser.images.length > 0 && (
+                 <div className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
+                    {viewingUser.images.map((img: string, idx: number) => (
+                      <img 
+                        key={idx} 
+                        src={img} 
+                        referrerPolicy="no-referrer"
+                        className="w-24 h-32 object-cover flex-shrink-0 border border-white/5 rounded-sm" 
+                        alt="gallery"
+                      />
                     ))}
                  </div>
-              </div>
+               )}
+
+               <div className="space-y-4 font-mono text-xs">
+                  <div className="p-3 bg-bg border border-white/5 italic text-muted">
+                     "{viewingUser.bio || 'No transmission data.'}"
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                     {viewingUser.interests?.map((it: string) => (
+                       <span key={it} className="px-2 py-1 bg-white/5 border border-white/10 text-[9px] uppercase">{it}</span>
+                     ))}
+                  </div>
+               </div>
 
               <button 
                 onClick={() => setViewingUser(null)}

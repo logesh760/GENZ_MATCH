@@ -21,6 +21,9 @@ export default function ProfileSetup({ user, onComplete }: Props) {
     favoriteSong: '',
     bio: '',
     interests: '',
+    instagram: '',
+    facebook: '',
+    images: '',
   });
 
   useEffect(() => {
@@ -43,6 +46,9 @@ export default function ProfileSetup({ user, onComplete }: Props) {
         favoriteSong: formData.favoriteSong,
         voiceTokens: 10, // Default 10 sessions
         bio: formData.bio,
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+        images: formData.images.split(',').map(s => s.trim()).filter(s => s !== ''),
         interests: formData.interests.split(',').map(s => s.trim()).filter(s => s !== ''),
         isOnline: true,
         lastActive: new Date().toISOString(),
@@ -153,6 +159,37 @@ export default function ProfileSetup({ user, onComplete }: Props) {
             placeholder="CODING, ANIME, ART..."
             value={formData.interests}
             onChange={e => setFormData({ ...formData, interests: e.target.value })}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <label className="section-label">08_INSTAGRAM</label>
+            <input
+              className="w-full bg-bg border border-white/10 focus:border-accent p-4 outline-none font-mono text-sm text-white transition-all"
+              placeholder="@username"
+              value={formData.instagram}
+              onChange={e => setFormData({ ...formData, instagram: e.target.value })}
+            />
+          </div>
+          <div className="space-y-4">
+            <label className="section-label">09_FACEBOOK</label>
+            <input
+              className="w-full bg-bg border border-white/10 focus:border-accent p-4 outline-none font-mono text-sm text-white transition-all"
+              placeholder="Profile name/link"
+              value={formData.facebook}
+              onChange={e => setFormData({ ...formData, facebook: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <label className="section-label">10_GALLERY_URLS (MAX 5)</label>
+          <textarea
+            className="w-full bg-bg border border-white/10 focus:border-accent p-4 h-24 resize-none outline-none font-mono text-[10px] text-zinc-500 transition-all"
+            placeholder="Paste image URLs separated by commas..."
+            value={formData.images}
+            onChange={e => setFormData({ ...formData, images: e.target.value })}
           />
         </div>
       </div>

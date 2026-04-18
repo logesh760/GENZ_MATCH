@@ -27,6 +27,9 @@ service cloud.firestore {
         && (data.get('favoriteSong', '') is string && data.get('favoriteSong', '').size() <= 100)
         && data.voiceTokens is int && data.voiceTokens >= 0 && data.voiceTokens <= 10
         && (data.get('bio', '') is string && data.get('bio', '').size() <= 500)
+        && (data.get('instagram', '') is string && data.get('instagram', '').size() <= 100)
+        && (data.get('facebook', '') is string && data.get('facebook', '').size() <= 100)
+        && (data.get('images', []) is list && data.get('images', []).size() <= 5)
         && data.isOnline is bool
         && (data.get('interests', []) is list && data.get('interests', []).size() <= 20);
     }

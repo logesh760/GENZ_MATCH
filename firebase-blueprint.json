@@ -16,7 +16,10 @@
         "interests": { "type": "array", "items": { "type": "string" } },
         "isOnline": { "type": "boolean" },
         "lastActive": { "type": "string", "format": "date-time" },
-        "avatarUrl": { "type": "string" }
+        "avatarUrl": { "type": "string" },
+        "instagram": { "type": "string", "description": "Instagram handle" },
+        "facebook": { "type": "string", "description": "Facebook profile link or name" },
+        "images": { "type": "array", "items": { "type": "string" }, "description": "Array of additional profile images URLs" }
       },
       "required": ["uid", "displayName", "gender", "language", "isOnline", "country", "voiceTokens"]
     },
