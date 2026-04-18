@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "User Profile",
+      "description": "Public and private profile data for users.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User's unique ID from Auth." },
+        "displayName": { "type": "string" },
+        "gender": { "type": "string", "enum": ["male", "female", "other"] },
+        "bio": { "type": "string" },
+        "language": { "type": "string", "description": "Preferred language (e.g., English, Tamil, etc.)" },
+        "country": { "type": "string" },
+        "favoriteSong": { "type": "string" },
+        "voiceTokens": { "type": "integer", "description": "Number of voice sessions remaining. Default 10." },
+        "interests": { "type": "array", "items": { "type": "string" } },
+        "isOnline": { "type": "boolean" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "avatarUrl": { "type": "string" }
+      },
+      "required": ["uid", "displayName", "gender", "language", "isOnline", "country", "voiceTokens"]
+    },
+    "Message": {
+      "title": "Chat Message",
+      "description": "Single message within a chat room.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["sent", "read"] }
+      },
+      "required": ["senderId", "text", "createdAt", "status"]
+    },
+    "Chat": {
+      "title": "Chat Session",
+      "description": "Represents a 1:1 chat between two users.",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessage": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["participants", "updatedAt"]
+    },
+    "Report": {
+      "title": "Safety Report",
+      "description": "Report filed against a user for inappropriate behavior.",
+      "type": "object",
+      "properties": {
+        "reporterId": { "type": "string" },
+        "reportedId": { "type": "string" },
+        "reason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "resolved"] }
+      },
+      "required": ["reporterId", "reportedId", "reason", "createdAt", "status"]
+    },
+    "Block": {
+      "title": "User Block",
+      "description": "Records when a user blocks another user.",
+      "type": "object",
+      "properties": {
+        "blockerId": { "type": "string" },
+        "blockedId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["blockerId", "blockedId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": "Profile",
+      "description": "Individual user profiles."
+    },
+    "/chats/{chatId}": {
+      "schema": "Chat",
+      "description": "Chat metadata for a 1:1 conversation."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a specific chat."
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Moderation reports."
+    },
+    "/blocks/{blockId}": {
+      "schema": "Block",
+      "description": "User-level blocks."
+    },
+    "/friend_requests/{requestId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "fromId": { "type": "string" },
+          "fromName": { "type": "string" },
+          "toId": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Pending connection requests between users."
+    },
+    "/profiles/{userId}/friends/{friendId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "uid": { "type": "string" },
+          "displayName": { "type": "string" },
+          "chatId": { "type": "string" },
+          "addedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Verified connections for a user."
+    }
+  }
+}

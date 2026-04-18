@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny Catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 3. Path Variable Hardening Helpers
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function isSignedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- Validation Blueprints ---
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'gender', 'language', 'isOnline', 'country', 'voiceTokens'])
+        && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 50
+        && data.gender in ['male', 'female', 'other']
+        && data.language is string && data.language.size() <= 20
+        && data.country is string && data.country.size() >= 2 && data.country.size() <= 50
+        && (data.get('favoriteSong', '') is string && data.get('favoriteSong', '').size() <= 100)
+        && data.voiceTokens is int && data.voiceTokens >= 0 && data.voiceTokens <= 10
+        && (data.get('bio', '') is string && data.get('bio', '').size() <= 500)
+        && data.isOnline is bool
+        && (data.get('interests', []) is list && data.get('interests', []).size() <= 20);
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['senderId', 'participants', 'text', 'createdAt', 'status'])
+        && data.senderId == request.auth.uid
+        && data.participants is list && data.participants.size() == 2
+        && data.participants.hasAll([request.auth.uid])
+        && data.text is string && data.text.size() >= 1 && data.text.size() <= 1000
+        && data.createdAt == request.time
+        && data.status in ['sent', 'read'];
+    }
+
+    function isValidChat(data) {
+      return data.keys().hasAll(['participants', 'updatedAt'])
+        && data.participants is list && data.participants.size() == 2
+        && data.participants.hasAll([request.auth.uid])
+        && data.updatedAt == request.time;
+    }
+
+    function isValidFriendRequest(data) {
+      return data.keys().hasAll(['fromId', 'toId', 'status', 'createdAt'])
+        && data.fromId == request.auth.uid
+        && data.toId is string && data.toId != request.auth.uid
+        && data.status == 'pending'
+        && data.createdAt == request.time;
+    }
+
+    function isValidFriend(data) {
+      return data.keys().hasAll(['uid', 'chatId', 'addedAt'])
+        && data.uid is string
+        && data.chatId is string
+        && data.addedAt == request.time;
+    }
+
+    // --- Collection Routes ---
+
+    // Profiles
+    match /profiles/{userId} {
+      allow get: if isSignedIn() && isValidId(userId);
+      allow list: if isSignedIn(); 
+
+      allow create: if isOwner(userId) && isValidId(userId) && isValidProfile(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && (
+        // Action: Update Profile Info
+        (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'bio', 'interests', 'language', 'gender', 'avatarUrl', 'lastActive', 'isOnline']) && isValidProfile(incoming()))
+        ||
+        // Action: Online Status Heartbeat
+        (incoming().diff(existing()).affectedKeys().hasOnly(['isOnline', 'lastActive']) && incoming().isOnline is bool)
+      );
+    }
+
+    // Chats
+    match /chats/{chatId} {
+      // Fix: chatId is bound for get, but using resource.data guards for safety.
+      allow get: if isSignedIn() && (resource == null || request.auth.uid in resource.data.participants);
+      allow list: if isSignedIn() && 'participants' in resource.data && request.auth.uid in resource.data.participants;
+      
+      allow create: if isSignedIn() && isValidChat(incoming());
+      allow update: if isSignedIn() && request.auth.uid in existing().participants
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['lastMessage', 'updatedAt']) || 
+          incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['typing'])
+        );
+    }
+
+    // Messages (Subcollection of Chats)
+    match /chats/{chatId}/messages/{messageId} {
+      // Pillar 8: Use resource.data for list queries. messageId is not bound during list.
+      allow get, list: if isSignedIn() && (resource == null || request.auth.uid in resource.data.participants);
+
+      allow create: if isSignedIn() && isValidMessage(incoming())
+        && !exists(/databases/$(database)/documents/blocks/$(request.auth.uid + "_" + incoming().participants[0]))
+        && !exists(/databases/$(database)/documents/blocks/$(request.auth.uid + "_" + incoming().participants[1]))
+        && !exists(/databases/$(database)/documents/blocks/$(incoming().participants[0] + "_" + request.auth.uid))
+        && !exists(/databases/$(database)/documents/blocks/$(incoming().participants[1] + "_" + request.auth.uid));
+        
+      allow update: if isSignedIn() && request.auth.uid in existing().participants
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status'])
+        && incoming().status == 'read';
+    }
+
+    // Reports
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && incoming().reporterId == request.auth.uid && isValidId(reportId);
+      // Only admins or system could read reports (simulated for now by denying all except owners if they need to see their status)
+      allow get: if isSignedIn() && resource.data.reporterId == request.auth.uid;
+    }
+
+    // Blocks
+    match /blocks/{blockId} {
+      allow create: if isSignedIn() && incoming().blockerId == request.auth.uid;
+      allow get: if isSignedIn() && (resource.data.blockerId == request.auth.uid || resource.data.blockedId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.blockerId == request.auth.uid);
+      allow delete: if isSignedIn() && resource.data.blockerId == request.auth.uid;
+    }
+
+    // Friend Requests
+    match /friend_requests/{requestId} {
+      allow get: if isSignedIn() && (resource == null || resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
+      allow list: if isSignedIn() && (
+        ('fromId' in resource.data && resource.data.fromId == request.auth.uid) || 
+        ('toId' in resource.data && resource.data.toId == request.auth.uid)
+      );
+      allow create: if isSignedIn() && isValidFriendRequest(incoming())
+        && !exists(/databases/$(database)/documents/blocks/$(request.auth.uid + "_" + incoming().toId))
+        && !exists(/databases/$(database)/documents/blocks/$(incoming().toId + "_" + request.auth.uid));
+      allow update: if isSignedIn() && ('toId' in resource.data && resource.data.toId == request.auth.uid) 
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status'])
+        && incoming().status in ['accepted', 'rejected'];
+      allow delete: if isSignedIn() && (resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
+    }
+
+    // Friends Subcollection
+    match /profiles/{userId}/friends/{friendId} {
+      allow get: if isSignedIn() && (isOwner(userId) || (resource != null && resource.data.uid == request.auth.uid));
+      allow list: if isSignedIn() && (isOwner(userId) || resource.data.uid == request.auth.uid);
+      allow write: if isSignedIn() && isOwner(userId) && isValidFriend(incoming());
+    }
+  }
+}
