@@ -68,10 +68,12 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
 
     const unsubMessages = onSnapshot(q, 
       (snapshot) => {
-        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const newMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setMessages(newMessages);
+        // Auto-scroll when new messages arrive
         setTimeout(() => {
           scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+        }, 50);
       },
       (error) => handleFirestoreError(error, 'list', `chats/${chatId}/messages`)
     );
@@ -118,46 +120,61 @@ export default function ChatRoom({ chatId, currentUser, onBack }: Props) {
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!inputText.trim() || isModerating) return;
+    const text = inputText.trim();
+    if (!text || isModerating) return;
 
     if (isBlockedByMe || hasBlockedMe) {
       alert("⚠️ SIGNAL_TERMINATED: Communication is currently blocked.");
       return;
     }
 
+    // 1. Clear input immediately for "Instant" feel
+    const originalText = text;
+    setInputText('');
+    
+    // 2. Add optimistic message to the UI
+    const optimisticId = `temp-${Date.now()}`;
+    const optimisticMessage = {
+      id: optimisticId,
+      senderId: currentUser.uid,
+      text: originalText,
+      createdAt: { seconds: Date.now() / 1000, nanoseconds: 0 },
+      status: 'sending',
+      isOptimistic: true
+    };
+    
+    setMessages(prev => [...prev, optimisticMessage]);
+
+    // 3. Moderate in background
     setIsModerating(true);
-    const modResult = await moderateMessage(inputText);
+    const modResult = await moderateMessage(originalText);
     
     if (modResult.status === 'block') {
       alert("⚠️ ACCESS_DENIED: Message filtered by AI Guard. Reason: " + modResult.reason);
+      setMessages(prev => prev.filter(m => m.id !== optimisticId));
       setIsModerating(false);
       return;
-    }
-
-    if (modResult.status === 'warning') {
-       if (!confirm("⚠️ CAUTION: AI flagged potential violation. Proceed with transmission?")) {
-          setIsModerating(false);
-          return;
-       }
     }
 
     try {
       const msgData = {
         senderId: currentUser.uid,
-        participants: participants, // Support Pillar 8 (relational check on resource.data)
-        text: inputText,
+        participants: participants,
+        text: originalText,
         createdAt: serverTimestamp(),
         status: 'sent'
       };
 
       await addDoc(collection(db, `chats/${chatId}/messages`), msgData);
       await updateDoc(doc(db, 'chats', chatId), {
-        lastMessage: inputText,
+        lastMessage: originalText,
         updatedAt: serverTimestamp()
       });
-      setInputText('');
+      // The real message will come in via onSnapshot and replace the optimistic one
     } catch (e: any) {
       handleFirestoreError(e, 'create', `chats/${chatId}/messages`);
+      setMessages(prev => prev.filter(m => m.id !== optimisticId));
+      setInputText(originalText); // Restore text on error
     } finally {
       setIsModerating(false);
     }

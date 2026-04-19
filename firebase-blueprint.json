@@ -19,6 +19,8 @@
         "avatarUrl": { "type": "string" },
         "instagram": { "type": "string", "description": "Instagram handle" },
         "facebook": { "type": "string", "description": "Facebook profile link or name" },
+        "tiktok": { "type": "string", "description": "TikTok handle" },
+        "snapchat": { "type": "string", "description": "Snapchat handle" },
         "images": { "type": "array", "items": { "type": "string" }, "description": "Array of additional profile images URLs" }
       },
       "required": ["uid", "displayName", "gender", "language", "isOnline", "country", "voiceTokens"]

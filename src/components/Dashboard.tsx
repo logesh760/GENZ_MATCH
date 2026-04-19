@@ -3,7 +3,7 @@ import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, getDoc, setDoc, serverTimestamp, orderBy, limit, deleteDoc, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MessageSquare, User as UserIcon, LogOut, Flame, Globe, Terminal, UserPlus, Check, X, Users, MessageCircle, Menu, Instagram, Facebook } from 'lucide-react';
+import { Search, MessageSquare, User as UserIcon, LogOut, Flame, Globe, Terminal, UserPlus, Check, X, Users, MessageCircle, Menu, Instagram, Facebook, Ghost, Video } from 'lucide-react';
 import { matchProfiles } from '../lib/gemini';
 
 export interface FirestoreErrorInfo {
@@ -146,7 +146,12 @@ export default function Dashboard({ user, onOpenChat }: Props) {
       );
 
       if (filteredOnline.length === 0) {
-        alert("⚠️ NETWORK_SATURATED: You have connected with or filtered all active nodes in this region.");
+        if (onlineUsers.length > 0) {
+           alert("⚠️ NETWORK_SATURATED: You have screened all available nodes. System will now allow re-shuffling through existing signals.");
+           // Optional: logic to allow re-matching if everything is seen
+        } else {
+           alert("⚠️ NO_NODES_FOUND: The region is offline. Invite contacts to establish sync.");
+        }
         setMatching(false);
         return;
       }
@@ -420,6 +425,16 @@ export default function Dashboard({ user, onOpenChat }: Props) {
                         <Facebook className="w-4 h-4" />
                       </a>
                     )}
+                    {matchedUser.tiktok && (
+                      <a href={`https://tiktok.com/@${matchedUser.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-[#ff0050] transition-colors">
+                        <Video className="w-4 h-4" />
+                      </a>
+                    )}
+                    {matchedUser.snapchat && (
+                      <a href={`https://snapchat.com/add/${matchedUser.snapchat}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-[#FFFC00] transition-colors">
+                        <Ghost className="w-4 h-4" />
+                      </a>
+                    )}
                     {matchedUser.favoriteSong && (
                       <div className="font-mono text-[10px] text-muted flex items-center gap-1 uppercase italic">
                          ♫ {matchedUser.favoriteSong}
@@ -655,6 +670,16 @@ export default function Dashboard({ user, onOpenChat }: Props) {
                     {viewingUser.facebook && (
                       <a href={viewingUser.facebook.startsWith('http') ? viewingUser.facebook : `https://facebook.com/${viewingUser.facebook}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent">
                         <Facebook className="w-3 h-3" />
+                      </a>
+                    )}
+                    {viewingUser.tiktok && (
+                      <a href={`https://tiktok.com/@${viewingUser.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-[#ff0050]">
+                        <Video className="w-3 h-3" />
+                      </a>
+                    )}
+                    {viewingUser.snapchat && (
+                      <a href={`https://snapchat.com/add/${viewingUser.snapchat}`} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-[#FFFC00]">
+                        <Ghost className="w-3 h-3" />
                       </a>
                     )}
                   </div>

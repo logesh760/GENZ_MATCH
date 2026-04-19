@@ -23,6 +23,8 @@ export default function ProfileSetup({ user, onComplete }: Props) {
     interests: '',
     instagram: '',
     facebook: '',
+    tiktok: '',
+    snapchat: '',
     images: '',
   });
 
@@ -48,6 +50,8 @@ export default function ProfileSetup({ user, onComplete }: Props) {
         bio: formData.bio,
         instagram: formData.instagram,
         facebook: formData.facebook,
+        tiktok: formData.tiktok,
+        snapchat: formData.snapchat,
         images: formData.images.split(',').map(s => s.trim()).filter(s => s !== ''),
         interests: formData.interests.split(',').map(s => s.trim()).filter(s => s !== ''),
         isOnline: true,
@@ -183,10 +187,31 @@ export default function ProfileSetup({ user, onComplete }: Props) {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <label className="section-label text-accent flex items-center gap-2">📱 11_TIKTOK</label>
+            <input
+              className="w-full bg-bg border border-white/10 focus:border-accent p-4 outline-none font-mono text-sm text-white transition-all transform hover:scale-[1.01]"
+              placeholder="@tiktok_handle"
+              value={formData.tiktok}
+              onChange={e => setFormData({ ...formData, tiktok: e.target.value })}
+            />
+          </div>
+          <div className="space-y-4">
+            <label className="section-label text-[#FFFC00] flex items-center gap-2">👻 12_SNAPCHAT</label>
+            <input
+              className="w-full bg-bg border border-white/10 focus:border-[#FFFC00] p-4 outline-none font-mono text-sm text-white transition-all transform hover:scale-[1.01]"
+              placeholder="snap_username"
+              value={formData.snapchat}
+              onChange={e => setFormData({ ...formData, snapchat: e.target.value })}
+            />
+          </div>
+        </div>
+
         <div className="space-y-4">
-          <label className="section-label">10_GALLERY_URLS (MAX 5)</label>
+          <label className="section-label">13_GALLERY_URLS (MAX 6)</label>
           <textarea
-            className="w-full bg-bg border border-white/10 focus:border-accent p-4 h-24 resize-none outline-none font-mono text-[10px] text-zinc-500 transition-all"
+            className="w-full bg-bg border border-white/10 focus:border-accent p-4 h-24 resize-none outline-none font-mono text-[10px] text-zinc-500 transition-all shadow-inner"
             placeholder="Paste image URLs separated by commas..."
             value={formData.images}
             onChange={e => setFormData({ ...formData, images: e.target.value })}
